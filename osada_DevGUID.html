@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>.NET MAUI 開発ガイド - インタラクティブダッシュボード</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f5f5f4;
+            color: #1c1917;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            max-height: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .step-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .code-block {
+            /* Ensures better scrolling visibility for long code blocks */
+            overflow: auto;
+            height: 100%;
+            min-height: 250px;
+        }
+        .code-block::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .code-block::-webkit-scrollbar-track {
+            background: #292524;
+        }
+        .code-block::-webkit-scrollbar-thumb {
+            background: #57534e;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl text-indigo-700">.NET MAUI DevGuide</span>
+                    <div class="ml-4 text-xs text-stone-500 flex items-center space-x-3 border-l pl-3 border-stone-200">
+                        <span>作成者: 晝場</span>
+                        <span>生徒: 長田</span>
+                    </div>
+                    </div>
+                <div class="hidden md:flex space-x-8">
+                    <button onclick="scrollToSection('setup')" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">1. 環境・DB準備</button>
+                    <button onclick="scrollToSection('xaml')" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">2. 画面設計 (XAML)</button>
+                    <button onclick="scrollToSection('logic')" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">3. ロジック (C#)</button>
+                    <button onclick="scrollToSection('db')" class="text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">4. DB連携</button>
+                </div>
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-stone-500 hover:text-stone-700 focus:outline-none">
+                        <span class="text-2xl">≡</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-stone-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="scrollToSection('setup')" class="block w-full text-left text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">1. 環境・DB準備</button>
+                <button onclick="scrollToSection('xaml')" class="block w-full text-left text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">2. 画面設計 (XAML)</button>
+                <button onclick="scrollToSection('logic')" class="block w-full text-left text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">3. ロジック (C#)</button>
+                <button onclick="scrollToSection('db')" class="block w-full text-left text-stone-600 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium">4. DB連携</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <section class="text-center py-10 bg-white rounded-2xl shadow-sm border border-stone-100">
+            <h1 class="text-4xl font-bold text-stone-900 mb-4">.NET MAUI デスクトップアプリ開発</h1>
+            <p class="text-lg text-stone-600 max-w-3xl mx-auto mb-6">
+                設計書から実装まで、.NET 9 MAUIを使用したデスクトップアプリケーション開発のクイックスタートガイドです。
+                このダッシュボードは、開発フロー全体を俯瞰し、必要なコマンドやコードをインタラクティブに確認できるように設計されています。
+            </p>
+            
+            <div class="flex justify-center gap-6 mb-6">
+                <div class="text-sm font-medium text-stone-700 bg-stone-100 px-4 py-2 rounded-full shadow-inner">
+                    作成者: **晝場**
+                </div>
+                <div class="text-sm font-medium text-stone-700 bg-stone-100 px-4 py-2 rounded-full shadow-inner">
+                    生徒: **長田**
+                </div>
+            </div>
+            <div class="flex justify-center gap-4">
+                <div class="flex items-center gap-2 text-sm text-stone-500 bg-stone-100 px-3 py-1 rounded-full">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span> .NET 9 対応
+                </div>
+                <div class="flex items-center gap-2 text-sm text-stone-500 bg-stone-100 px-3 py-1 rounded-full">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full"></span> PostgreSQL (Npgsql)
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="order-2 md:order-1">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100 h-full">
+                    <h3 class="text-lg font-bold mb-4 text-stone-800">開発フェーズと重要度分布</h3>
+                    <p class="text-sm text-stone-600 mb-4">
+                        プロジェクトの安定性と機能性は、画面設計とロジック実装に大きく依存します。ここでは、各フェーズの相対的な重要度を可視化しています。
+                    </p>
+                    <div class="chart-container">
+                        <canvas id="complexityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="order-1 md:order-2 space-y-4">
+                <h2 class="text-2xl font-bold text-stone-900 border-l-4 border-indigo-500 pl-4">このガイドの使い方</h2>
+                <p class="text-stone-700">
+                    このアプリケーションは、開発手順を4つの主要なステップに分解しています。
+                    上部のナビゲーションボタンで各フェーズへ素早く移動し、インタラクティブな要素やコード例を活用して理解を深めてください。
+                </p>
+                <ul class="space-y-2 text-stone-600 list-disc list-inside bg-white p-4 rounded-lg border border-stone-200">
+                    <li><strong class="text-indigo-600">Step 1:</strong> ターミナルコマンドやDB準備を確認</li>
+                    <li><strong class="text-indigo-600">Step 2:</strong> XAMLの基本構成と自習ポイントを把握</li>
+                    <li><strong class="text-indigo-600">Step 3:</strong> C#での画面操作ロジックを体験</li>
+                    <li><strong class="text-indigo-600">Step 4:</strong> Npgsqlを使った安全なDBアクセス方法を習得</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="setup" class="scroll-mt-24">
+            <div class="bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Step 1: 環境構築とプロジェクト作成</h2>
+                    <span class="text-indigo-200 text-sm">Setup & Database</span>
+                </div>
+                <div class="p-6 md:p-8">
+                    <p class="text-stone-600 mb-6">
+                        初期設定とデータベースのスキーマ準備が完了しているかを確認します。特にDB側でビジネスロジックを担うファンクションが正しく作成されているか重要です。
+                    </p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <h3 class="font-bold text-stone-800 text-lg border-b pb-2">事前チェックリスト</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-start gap-3 p-3 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-medium text-stone-800">TBL作成</span>
+                                        <p class="text-xs text-stone-500">Create TABLE文を実行</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-3 p-3 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-medium text-stone-800">ストアドファンクション作成</span>
+                                        <p class="text-xs text-stone-500">Create Function文を実行</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-3 p-3 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-medium text-stone-800">MAUI Workload 確認</span>
+                                        <p class="text-xs text-stone-500"><code>dotnet workload check</code> を実行し、MAUIワークロードがインストールされているか確認</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-3 p-3 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                                    <div>
+                                        <span class="font-medium text-stone-800">プロジェクト作成</span>
+                                        <p class="text-xs text-stone-500"><code>dotnet new maui</code> コマンドを実行し、プロジェクトを作成</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-stone-900 rounded-lg p-6 shadow-inner text-stone-300">
+                            <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="text-indigo-400">➤</span> コマンドジェネレーター
+                            </h3>
+                            <p class="text-xs text-stone-400 mb-3">テキストボックスにプロジェクト名を入力するとコマンドが作成されます</p>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-stone-400 mb-1">プロジェクト名</label>
+                                    <input type="text" id="appNameInput" value="ColorCD"
+                                        class="w-full bg-stone-800 border border-stone-700 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors">
+                                </div>
+                                <div class="bg-black/50 p-4 rounded border border-stone-700 font-mono text-sm relative group space-y-2">
+                                    <p class="text-stone-500 select-none mb-1"># 環境・プロジェクト作成コマンド</p>
+                                    <p class="text-amber-400" id="versionCommand">dotnet --version  # .NET SDK バージョン確認</p>
+                                    <p class="text-amber-400" id="workloadCommand">dotnet workload check  # MAUIワークロード確認</p>
+                                    <hr class="border-stone-700">
+                                    <p class="text-green-400" id="generatedCommand">dotnet new maui -n ColorCD</p>
+                                    <p class="text-green-400" id="cdCommand">cd ColorCD</p>
+                                    <button onclick="copyCommand()" class="absolute top-2 right-2 text-xs bg-stone-700 hover:bg-stone-600 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                        Copy
+                                    </button>
+                                </div>
+                                <div class="text-xs text-stone-500 mt-2">
+                                    <span class="text-yellow-500">Tip:</span> ワークロードがない場合は <code>dotnet workload install maui</code> を実行してください。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="xaml" class="scroll-mt-24">
+            <div class="bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Step 2: 画面構成 (XAML)</h2>
+                    <span class="text-indigo-200 text-sm">User Interface</span>
+                </div>
+                <div class="p-6 md:p-8">
+                    <p class="text-stone-600 mb-6">
+                        XAMLはUIを定義するマークアップ言語です。画面構成比率や基本的なコントロールを理解し、画面部品を適切に配置しましょう。
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <div class="bg-stone-50 p-4 rounded-lg border border-stone-200">
+                            <h4 class="text-center font-bold text-stone-700 mb-2">MAUI画面(Page)の構成要素</h4>
+                            <div class="chart-container">
+                                <canvas id="xamlChart"></canvas>
+                            </div>
+                            <p class="text-xs text-center text-stone-500 mt-2">画面の土台となるLayout要素が重要であり、Controlsを組み込むための適切なレイアウトを選択する必要があります。</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white border border-stone-200 rounded-lg p-4 step-card">
+                                <h3 class="font-bold text-indigo-700 mb-2">1. Layout (配置ルール)</h3>
+                                <p class="text-sm text-stone-600 mb-2">要素を縦、横、またはグリッド状に並べるためのコンテナ要素です。</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded border border-indigo-100 font-mono">VerticalStackLayout</span>
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded border border-indigo-100 font-mono">Grid</span>
+                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs rounded border border-indigo-100 font-mono">FlexLayout</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-stone-200 rounded-lg p-4 step-card">
+                                <h3 class="font-bold text-amber-600 mb-2">2. Controls (画面部品)</h3>
+                                <p class="text-sm text-stone-600 mb-2">ユーザーとのインタラクションを担う具体的な部品です。</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="text-sm border-l-2 border-stone-300 pl-2">
+                                        <span class="font-mono font-bold block">Label</span>
+                                        <span class="text-xs text-stone-500">静的な文字</span>
+                                    </div>
+                                    <div class="text-sm border-l-2 border-stone-300 pl-2">
+                                        <span class="font-mono font-bold block">Entry</span>
+                                        <span class="text-xs text-stone-500">一行入力</span>
+                                    </div>
+                                    <div class="text-sm border-l-2 border-stone-300 pl-2">
+                                        <span class="font-mono font-bold block">Button</span>
+                                        <span class="text-xs text-stone-500">操作ボタン</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-stone-800 text-stone-300 rounded-lg p-4 font-mono text-sm">
+                                <div class="text-xs text-stone-500 mb-1">// C#連携のための重要設定</div>
+                                <div>&lt;Entry <span class="text-yellow-400">x:Name="InputEntry"</span> ... /&gt;</div>
+                                <div class="mt-1">&lt;Button <span class="text-green-400">Clicked="OnExecuteButtonClicked"</span> ... /&gt;</div>
+                                <div class="mt-2 text-xs text-stone-400">
+                                    ※ <code>x:Name</code> はC#からのID、<code>Clicked</code> はイベントハンドラーです。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 bg-amber-50 border-l-4 border-amber-500 p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 text-amber-500 text-xl">💡</div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-amber-800">調べてみよう</h3>
+                                <p class="mt-1 text-sm text-amber-700">
+                                    MAUIには他にも <code>CollectionView</code> や <code>DatePicker</code> など、多くのコントロールが存在します。
+                                    公式ドキュメント等を参照し、使えそうな部品とその**プロパティ** (例: TextColor, IsEnabled) や**イベント** (例: TextChanged, SelectedIndexChanged) を自力で調査し、引き出しを増やしましょう。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="logic" class="scroll-mt-24">
+            <div class="bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Step 3: アプリケーションロジック (C#)</h2>
+                    <span class="text-indigo-200 text-sm">Code Behind</span>
+                </div>
+                <div class="p-6 md:p-8 space-y-8">
+                    <p class="text-stone-600">
+                        <code>MainPage.xaml.cs</code> (コードビハインド) でXAML要素に対するイベント処理とビジネスロジックを実装します。以下のシミュレーターで、C#による画面操作を体験してください。
+                    </p>
+
+                    <div class="border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-stone-100 px-4 py-2 border-b border-stone-200 flex justify-between items-center">
+                            <span class="font-bold text-stone-700 text-sm">シミュレーター 1: データ反映</span>
+                            <span class="text-xs text-stone-400">入力値を取得しラベルに反映</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2">
+                            <div class="bg-stone-900 p-6 font-mono text-sm text-stone-300 code-block">
+                                <div class="mb-4 text-stone-500">// C#コードビハインド</div>
+                                <div class="text-pink-400">private void</div> <div class="text-yellow-300 inline">OnExecuteButtonClicked</div>(object sender, EventArgs e)
+                                <br>{
+                                <br>&nbsp;&nbsp;<span class="text-stone-500">// XAML要素のプロパティを読み書き</span>
+                                <br>&nbsp;&nbsp;string inputText = <span class="text-cyan-300">InputEntry</span>.Text;
+                                <br>
+                                <br>&nbsp;&nbsp;if (!string.IsNullOrEmpty(inputText))
+                                <br>&nbsp;&nbsp;{
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-cyan-300">ResultLabel</span>.Text = <span class="text-green-300">$"入力された値: {inputText}"</span>;
+                                <br>&nbsp;&nbsp;}
+                                <br>}
+                            </div>
+
+                            <div class="bg-white p-6 flex flex-col justify-center items-center space-y-6 border-t md:border-t-0 md:border-l border-stone-200">
+                                <div class="w-full max-w-xs">
+                                    <label class="text-xs font-bold text-stone-400 mb-1 block">Entry (x:Name="InputEntry")</label>
+                                    <input type="text" id="simInput" placeholder="ここに入力..." 
+                                        class="w-full border border-stone-300 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                                <button onclick="runSimulation()" 
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded shadow transition-transform active:scale-95">
+                                    実行 (Clickedイベント)
+                                </button>
+                                <div class="w-full max-w-xs p-4 bg-stone-50 rounded border border-stone-200 text-center min-h-[60px] flex items-center justify-center">
+                                    <div>
+                                        <div class="text-xs font-bold text-stone-400 mb-1">Label (x:Name="ResultLabel")</div>
+                                        <span id="simOutput" class="text-indigo-600 font-bold">Waiting for input...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-stone-100 px-4 py-2 border-b border-stone-200 flex justify-between items-center">
+                            <span class="font-bold text-stone-700 text-sm">シミュレーター 2: カウンター</span>
+                            <span class="text-xs text-stone-400">変数を操作し、画面を更新</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2">
+                            <div class="bg-stone-900 p-6 font-mono text-sm text-stone-300 code-block">
+                                <div class="mb-4 text-stone-500">// C#コードビハインド</div>
+                                <div class="text-pink-400">int</div> <div class="text-cyan-300 inline">count = 0;</div>
+                                <br>
+                                <br><div class="text-pink-400">private void</div> <div class="text-yellow-300 inline">OnCounterClicked</div>(object sender, EventArgs e)
+                                <br>{
+                                <br>&nbsp;&nbsp;<span class="text-cyan-300">count</span>++;
+                                <br>&nbsp;&nbsp;<span class="text-stone-500">// countLabel: XAMLで定義されたLabelのx:Name</span>
+                                <br>&nbsp;&nbsp;string text = <span class="text-cyan-300">count</span> == 1 ? <span class="text-green-300">$"Clicked 1 time"</span> : <span class="text-green-300">$"Clicked {count} times"</span>;
+                                <br>&nbsp;&nbsp;<span class="text-cyan-300">CountLabel</span>.Text = text;
+                                <br>}
+                            </div>
+
+                            <div class="bg-white p-6 flex flex-col justify-center items-center space-y-6 border-t md:border-t-0 md:border-l border-stone-200">
+                                <div class="w-full max-w-xs p-4 bg-stone-50 rounded border border-stone-200 text-center min-h-[60px] flex items-center justify-center">
+                                    <div>
+                                        <div class="text-xs font-bold text-stone-400 mb-1">Label (x:Name="CountLabel")</div>
+                                        <span id="simCounterOutput" class="text-indigo-600 font-bold">Clicked 0 times</span>
+                                    </div>
+                                </div>
+                                <button onclick="runCounterSimulation()" 
+                                    class="bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-6 rounded shadow transition-transform active:scale-95">
+                                    カウンター実行
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="db" class="scroll-mt-24 mb-12">
+            <div class="bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Step 4: DBアクセス (Npgsql)</h2>
+                    <span class="text-indigo-200 text-sm">PostgreSQL Integration</span>
+                </div>
+                <div class="p-6 md:p-8 space-y-8">
+                    <p class="text-stone-600 mb-6">
+                        NpgsqlはPostgreSQLにアクセスするためのADO.NETプロバイダーです。セキュリティとパフォーマンスの観点から、**パラメータ化クエリ**と**ストアドファンクション**の使用が推奨されます。
+                    </p>
+
+                    <div class="border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-stone-100 px-4 py-2 border-b border-stone-200 flex justify-between items-center">
+                            <span class="font-bold text-stone-700 text-sm">Npgsql 接続と切断</span>
+                            <span class="text-xs text-stone-400">Connection Poolingとリソース管理</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2">
+                            <div class="bg-stone-900 p-6 font-mono text-sm text-stone-300 code-block">
+                                <div class="mb-4 text-stone-500">// C# - usingステートメントで自動的に接続を閉じる</div>
+                                <div class="text-pink-400">try</div>
+                                <br>{
+                                <br>&nbsp;&nbsp;var connString = <span class="text-green-300">"Host=...;Username=...;Password=..."</span>;
+                                <br>&nbsp;&nbsp;<div class="text-pink-400">using var</div> conn = <span class="text-yellow-300">new NpgsqlConnection</span>(connString);
+                                <br>&nbsp;&nbsp;conn.<span class="text-cyan-300">Open</span>();
+                                <br>&nbsp;&nbsp;<span class="text-stone-500">// 接続成功後の処理をここに記述...</span>
+                                <br>&nbsp;&nbsp;<span class="text-cyan-300">ResultLabel</span>.Text = <span class="text-green-300">"DB接続成功"</span>;
+                                <br>}
+                                <br><div class="text-pink-400">catch</div> (Exception ex)
+                                <br>{
+                                <br>&nbsp;&nbsp;<span class="text-cyan-300">ResultLabel</span>.Text = <span class="text-green-300">$"DB接続エラー: {ex.Message}"</span>;
+                                <br>} <span class="text-stone-500">// usingによりconn.Close()は自動実行</span>
+                            </div>
+                            <div class="bg-white p-6 flex flex-col justify-center items-center space-y-4 border-t md:border-t-0 md:border-l border-stone-200">
+                                <div class="w-full max-w-xs p-4 bg-indigo-50 rounded border border-indigo-200 text-center">
+                                    <div class="text-xs font-bold text-indigo-400 mb-1">Simulated Output</div>
+                                    <span class="text-indigo-600 font-bold">DB接続成功</span><br>
+                                    <span class="text-xs text-stone-500 mt-1 block">Connection Poolに接続が戻されます</span>
+                                </div>
+                                <p class="text-sm text-stone-600">
+                                    NpgsqlConnectionは`using`を使うことで、例外が発生しても必ず閉じられ、リソースリークを防ぎます。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-stone-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-stone-100 px-4 py-2 border-b border-stone-200 flex justify-between items-center">
+                            <span class="font-bold text-stone-700 text-sm">パラメータ化クエリ (INSERT)</span>
+                            <span class="text-xs text-stone-400">SQLインジェクション対策</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2">
+                            <div class="bg-stone-900 p-6 font-mono text-sm text-stone-300 code-block">
+                                <div class="mb-4 text-stone-500">// C# - パラメータを使ってデータを挿入</div>
+                                var <span class="text-cyan-300">userName</span> = <span class="text-green-300">"Alice"</span>;
+                                <br>var <span class="text-cyan-300">sql</span> = <span class="text-green-300">"INSERT INTO users (name) VALUES (@pName)"</span>;
+                                <br>
+                                <br><div class="text-pink-400">using var</div> cmd = <span class="text-yellow-300">new NpgsqlCommand</span>(<span class="text-cyan-300">sql</span>, conn);
+                                <br>cmd.Parameters.<span class="text-cyan-300">AddWithValue</span>(<span class="text-green-300">"pName"</span>, <span class="text-cyan-300">userName</span>);
+                                <br>
+                                <br>var affectedRows = cmd.<span class="text-cyan-300">ExecuteNonQuery</span>();
+                                <br><span class="text-cyan-300">StatusLabel</span>.Text = <span class="text-green-300">$"登録完了: {affectedRows}行"</span>;
+                            </div>
+                            <div class="bg-white p-6 flex flex-col justify-center items-center space-y-4 border-t md:border-t-0 md:border-l border-stone-200">
+                                <div class="w-full max-w-xs p-4 bg-green-50 rounded border border-green-200 text-center">
+                                    <div class="text-xs font-bold text-green-600 mb-1">Simulated Output</div>
+                                    <span class="text-green-700 font-bold">登録完了: 1行</span><br>
+                                    <span class="text-xs text-stone-500 mt-1 block">データが安全にDBに渡されました</span>
+                                </div>
+                                <p class="text-sm text-stone-600">
+                                    パラメータを使うことで、ユーザーの入力内容をSQLコマンドとして実行するのではなく、データとして扱うことが保証され、SQLインジェクション攻撃を防ぎます。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-stone-200 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-stone-500">
+            &copy; 2025 .NET MAUI DevGuide Project.
+        </div>
+    </footer>
+
+<script>
+    // カウンターシミュレーションのグローバル変数
+    let simCounter = 0;
+
+    // コマンドジェネレーターロジック
+    function updateCommand() {
+        const appName = document.getElementById('appNameInput').value || 'ColorCD';
+        document.getElementById('generatedCommand').innerText = `dotnet new maui -n ${appName}`;
+        document.getElementById('cdCommand').innerText = `cd ${appName}`;
+    }
+    document.getElementById('appNameInput').addEventListener('input', updateCommand);
+    updateCommand(); // 初期ロード時に実行
+
+    function copyCommand() {
+        const commandText = document.getElementById('generatedCommand').innerText + '\n' + document.getElementById('cdCommand').innerText;
+        navigator.clipboard.writeText(commandText).then(() => {
+            alert('コマンドをクリップボードにコピーしました！');
+        });
+    }
+
+    // シミュレーター 1 ロジック
+    function runSimulation() {
+        const inputText = document.getElementById('simInput').value;
+        const resultLabel = document.getElementById('simOutput');
+        
+        // C#コードビハインドのロジックをシミュレート
+        if (inputText && inputText.trim() !== "") {
+            resultLabel.textContent = `入力された値: ${inputText}`;
+        } else {
+            resultLabel.textContent = `入力された値: (空)`;
+        }
+    }
+
+    // シミュレーター 2 ロジック
+    function runCounterSimulation() {
+        simCounter++; // count++;
+        const countLabel = document.getElementById('simCounterOutput');
+        
+        // C#コードビハインドのロジックをシミュレート
+        let text = simCounter === 1 ? `Clicked 1 time` : `Clicked ${simCounter} times`;
+        countLabel.textContent = text;
+    }
+
+    // ナビゲーションスクロール
+    function scrollToSection(id) {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        // モバイルメニューを閉じる
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+             mobileMenu.classList.add('hidden');
+        }
+    }
+
+    // モバイルメニュー切り替え
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            mobileMenu.classList.toggle('hidden');
+        }
+    }
+    
+    // Chart.js グラフ描画
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. 開発フェーズと重要度分布 (complexityChart) ---
+        const complexityCtx = document.getElementById('complexityChart').getContext('2d');
+        new Chart(complexityCtx, {
+            type: 'pie',
+            data: {
+                labels: ['企画・設計', '開発・実装', 'テスト・評価', '運用・保守'],
+                datasets: [{
+                    data: [15, 45, 25, 15], // 元のデータ (一切変更しない)
+                    backgroundColor: [
+                        '#4f46e5', // 企画・設計 (インディゴ)
+                        '#dc2626', // 開発・実装 (高彩度赤)
+                        '#059669', // テスト・評価 (エメラルド緑)
+                        '#f59e0b'  // 運用・保守 (アンバーオレンジ)
+                    ],
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: 'Noto Sans JP',
+                            }
+                        }
+                    },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + '%';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- 2. MAUI画面の構成要素 (xamlChart) ---
+        const xamlCtx = document.getElementById('xamlChart').getContext('2d');
+        new Chart(xamlCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Layout (配置)', 'Controls (画面部品)', 'Logic (C#連携)'],
+                datasets: [{
+                    data: [35, 45, 20], // 元のデータ (一切変更しない)
+                    backgroundColor: [
+                        '#fb923c', // Layout (明るいオレンジ/アンバー)
+                        '#1e40af', // Controls (濃い青/ロイヤルブルー)
+                        '#a855f7'  // Logic (バイオレット/明るい紫)
+                    ],
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                family: 'Noto Sans JP',
+                            }
+                        }
+                    },
+                    tooltip: {
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + '%';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
